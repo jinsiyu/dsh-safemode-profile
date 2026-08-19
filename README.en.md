@@ -91,9 +91,6 @@ edit is restored by the guard):
 ```powershell
 # pure CLI only (no GUI)
 $env:DSH_SAFEMODE_BUNDLES = "@deepseek-ai/dsh-base"
-# keep the undo tool (must be installed into the safemode profile first;
-# note: any bundle outside the whitelist added by hand gets restored away)
-$env:DSH_SAFEMODE_BUNDLES = "@deepseek-ai/dsh-base,@deepseek-ai/dsh-web-app,dsh-undo-savepoint"
 ```
 
 The variable is read from `process.env` by both the guard and the restore

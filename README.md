@@ -85,9 +85,6 @@ profile 文件——任何改动都会被守护逻辑还原）：
 ```powershell
 # 只想留纯 CLI（无 GUI）
 $env:DSH_SAFEMODE_BUNDLES = "@deepseek-ai/dsh-base"
-# 想保留撤销工具（需先把它装进 safemode profile；注意：手动加的白名单外
-# bundle 会被还原掉）
-$env:DSH_SAFEMODE_BUNDLES = "@deepseek-ai/dsh-base,@deepseek-ai/dsh-web-app,dsh-undo-savepoint"
 ```
 
 `dsh` 启动时继承该环境变量即生效（本插件读取 `process.env`，守护与还原
