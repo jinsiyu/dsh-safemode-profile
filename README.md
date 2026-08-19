@@ -1,5 +1,7 @@
 # dsh-safemode-profile
 
+> [English](README.en.md)
+
 **唯一职责：让 `dsh --profile safemode` 永远是干净的——启动即强制还原，
 运行期持续守护，任何时刻都只含白名单核心 bundle。**
 
@@ -48,15 +50,32 @@ DSH 每次启动加载本插件时强制还原一次，并进入常驻守护。
 
 ## 安装
 
+前置：已安装 DSH（`@deepseek-ai/dsh`）与 Node.js（≥18）。
+
+**方式 A（推荐，npm 一条命令）** — 本插件已发布到 npm 并声明 `dsh.bundle` manifest，直接用官方插件命令安装：
+
+```powershell
+dsh plugin --profile web add dsh-safemode-profile
+```
+
+**方式 B（GitHub 直装）** — 从源码仓库直接安装（显式指定默认分支 `main`，npm 与 pnpm 均兼容）：
+
+```powershell
+dsh plugin --profile web add github:jinsiyu/dsh-safemode-profile#main
+```
+
+**方式 C（本地打包/未发布）** — 本地构建 tgz 安装：
+
 ```powershell
 # 在插件目录打包
-npm pack                          # → dsh-safemode-profile-0.3.0.tgz
+npm pack                          # → dsh-safemode-profile-0.3.5.tgz
 
 # 安装进目标 profile（例如 web）
-dsh plugin --profile web add .\dsh-safemode-profile-0.3.0.tgz
+dsh plugin --profile web add .\dsh-safemode-profile-0.3.5.tgz
 ```
 
 装完重启 DSH，插件行生效后 safemode 进入"强制还原 + 常驻守护"状态。
+启动时插件会打印一行简短横幅（守护状态、启动命令、白名单、仓库链接）。
 
 ## 自定义白名单
 

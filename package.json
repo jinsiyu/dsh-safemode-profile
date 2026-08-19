@@ -1,6 +1,6 @@
 {
   "name": "dsh-safemode-profile",
-  "version": "0.3.3",
+  "version": "0.3.5",
   "description": "Safemode profile enforcer: force-restores ~/.dsh/profiles/safemode to a clean whitelist (dsh-base + dsh-web-app) on start and continuously guards it against modification, so `dsh --profile safemode` always boots with zero third-party plugins. No build scripts: the bundle row does all work.",
   "type": "module",
   "main": "lib/index.js",
@@ -20,6 +20,7 @@
     "scripts/ensure-safemode.mjs",
     "cordis.patch.yml",
     "README.md",
+    "README.en.md",
     "LICENSE"
   ],
   "engines": {
