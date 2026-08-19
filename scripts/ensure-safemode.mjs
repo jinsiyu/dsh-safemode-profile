@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 /**
- * postinstall 入口：安装时强制写入 safemode profile（force 还原语义，
- * 与插件行启动时的行为一致——不管 profile 有没有、改没改过，一律写回
- * 白名单模板）。
+ * 手动工具：立即强制还原 safemode profile（force 语义——不管 profile 有没有、
+ * 改没改过，一律写回白名单模板）。
  *
- * 注意：pnpm 10+ 默认忽略依赖的构建脚本（需 pnpm approve-builds 批准），
- * 未批准时此脚本不会运行——此时由插件行（lib/index.js）在 DSH 启动时兜底。
+ * 本包**没有构建脚本**（无 postinstall），所以 pnpm 永远不会拦截它，
+ * `dsh plugin add` 一次成功。日常保障由插件行（lib/index.js）承担：
+ * DSH 每次启动时强制还原 + 运行期持续守护。
+ *
+ * 手动运行的场景：
+ *   - 不想重启 DSH，想立刻拉回 safemode profile；
+ *   - 测试/排障时确认当前状态。
  */
 import { ensureSafeModeProfile } from '../lib/ensure.js';
 

@@ -1,7 +1,7 @@
 {
   "name": "dsh-safemode-profile",
-  "version": "0.2.0",
-  "description": "Safemode profile enforcer: force-restores ~/.dsh/profiles/safemode to a clean whitelist (dsh-base + dsh-web-app) on start and continuously guards it against modification, so `dsh --profile safemode` always boots with zero third-party plugins",
+  "version": "0.3.0",
+  "description": "Safemode profile enforcer: force-restores ~/.dsh/profiles/safemode to a clean whitelist (dsh-base + dsh-web-app) on start and continuously guards it against modification, so `dsh --profile safemode` always boots with zero third-party plugins. No build scripts: the bundle row does all work.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -22,9 +22,6 @@
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "postinstall": "node scripts/ensure-safemode.mjs"
-  },
   "engines": {
     "node": ">=18"
   },
