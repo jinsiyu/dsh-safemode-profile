@@ -1,7 +1,7 @@
 {
   "name": "dsh-safemode-profile",
-  "version": "0.1.0",
-  "description": "Install-time safemode profile writer: ensures ~/.dsh/profiles/safemode exists (whitelist: dsh-base + dsh-web-app) so `dsh --profile safemode` boots with zero third-party plugins",
+  "version": "0.2.0",
+  "description": "Safemode profile enforcer: force-restores ~/.dsh/profiles/safemode to a clean whitelist (dsh-base + dsh-web-app) on start and continuously guards it against modification, so `dsh --profile safemode` always boots with zero third-party plugins",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -16,6 +16,7 @@
   "files": [
     "lib/index.js",
     "lib/ensure.js",
+    "lib/guard.js",
     "scripts/ensure-safemode.mjs",
     "cordis.patch.yml",
     "README.md",
