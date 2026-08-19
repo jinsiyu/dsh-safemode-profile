@@ -1,0 +1,6 @@
+# dsh-safemode-profile bundle patch layer.
+# One host row: on apply it ensures the safemode profile exists (idempotent,
+# no-op once ~/.dsh/profiles/safemode/package.json is present).
+- insert:
+    - id: safemode-profile-writer
+      name: dsh-safemode-profile
