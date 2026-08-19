@@ -19,7 +19,7 @@ dsh --profile safemode        # 零第三方插件启动
 
 关键性质：
 
-- **白名单即 `dsh.profile.bundles`**：没列出的插件（`dsh-auto-open-web` 及未来
+- **白名单即 `dsh.profile.bundles`**：没列出的插件（
   安装的所有第三方插件）在 safemode profile 里根本不存在，结构性排除，无需维护名单。
 - **不需要 pnpm / node_modules**：核心 bundle 从 dsh 安装目录解析
   （`resolveBundleDir` 安装锚点优先），safemode profile 是一份纯配置文件。
