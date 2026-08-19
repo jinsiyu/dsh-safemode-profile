@@ -1,0 +1,11 @@
+# 测试残留（临时 DSH_HOME / pnpm 缓存）
+.test-home/
+.npm-cache/
+.pnpm-store/
+sm-test/
+
+# npm 打包产物
+*.tgz
+
+# 依赖
+node_modules/
