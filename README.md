@@ -54,10 +54,3 @@ $env:DSH_SAFEMODE_BUNDLES = "@deepseek-ai/dsh-base"
 # 想保留撤销工具（需先把它装进 safemode profile）
 dsh plugin --profile safemode add dsh-undo-savepoint
 ```
-
-## 与 undo_safe_mode 的区别
-
-- `undo_safe_mode on`：改写**当前 profile** 的 `cordis.patch.yml` 为最小 patch，
-  只处理 patch 层、不裁剪 bundle（对你的 bundle 模式 profile 无效）。
-- 本插件：新建**独立 profile**，`dsh.profile.bundles` 本身即白名单，任何第三方
-  插件都无法进入，结构性隔离。
