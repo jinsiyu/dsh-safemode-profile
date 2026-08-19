@@ -99,6 +99,137 @@ $env:DSH_SAFEMODE_BUNDLES = "@deepseek-ai/dsh-base,@deepseek-ai/dsh-web-app,dsh-
 The variable is read from `process.env` by both the guard and the restore
 logic, and takes effect the next time `dsh` starts with it set.
 
+## Hardening: make the three managed files read-only
+
+**Recommended**: set the three managed files under
+`~/.dsh/profiles/safemode/` read-only to block
+`dsh plugin --profile safemode add <pkg>` at the filesystem level — pnpm
+fails when it cannot write them, so the plugin never gets in (DSH startup
+is unaffected: it only reads them and writes `cordis.yml`):
+
+- `package.json` (dependencies + bundles — the choke point of any install)
+- `cordis.patch.yml` (the user patch layer)
+- `pnpm-workspace.yaml` (pnpm-managed file)
+
+> ⚠️ **Never lock the whole directory**: DSH rewrites `cordis.yml` on every
+> boot (`prepareProfile` unconditionally writeFileSync), so a read-only
+> directory or read-only `cordis.yml` makes safemode fail to start (verified:
+> exit 1). Windows `attrib +R <dir> /S` recursively locks every file
+> including `cordis.yml` — **do not use it**.
+
+```powershell
+# Windows: lock only the three files (no /S recursion)
+attrib +R "$env:USERPROFILE\.dsh\profiles\safemode\package.json" `
+         "$env:USERPROFILE\.dsh\profiles\safemode\cordis.patch.yml" `
+         "$env:USERPROFILE\.dsh\profiles\safemode\pnpm-workspace.yaml"
+
+# POSIX: the three files to 444 (the directory still needs r-x and must stay writable)
+chmod 444 ~/.dsh/profiles/safemode/package.json \
+          ~/.dsh/profiles/safemode/cordis.patch.yml \
+          ~/.dsh/profiles/safemode/pnpm-workspace.yaml
+```
+
+To unlock:
+
+```powershell
+attrib -R "$env:USERPROFILE\.dsh\profiles\safemode\package.json" `
+         "$env:USERPROFILE\.dsh\profiles\safemode\cordis.patch.yml" `
+         "$env:USERPROFILE\.dsh\profiles\safemode\pnpm-workspace.yaml"  # Windows
+chmod 644 ~/.dsh/profiles/safemode/package.json \
+          ~/.dsh/profiles/safemode/cordis.patch.yml \
+          ~/.dsh/profiles/safemode/pnpm-workspace.yaml                 # POSIX
+```
+
+Notes:
+- **Let the plugin create/restore the profile first, then lock** — the
+  content must match the whitelist template before locking (the guard only
+  writes when it detects drift; template-matching content is left untouched,
+  so locking coexists with the guard). If drift is found while locked, the
+  guard's restore fails with a warning — that is the expected behavior of a
+  lock: locked means no drift should exist.
+- Unlock before changing the whitelist. The guard itself is unaffected — it
+  reads `package.json` to detect drift and only writes when a drift is found.
+
+### Deeper protection: ACL (Windows) and chattr +i (Linux)
+
+The `attrib +R` / `chmod 444` above is "**basic read-only**": the two
+platforms treat it differently, and neither can stop **deletion** (deleting
+a file depends on the parent directory's permissions; root ignores all
+permission bits anyway). The following are "**hard locks**", pick as needed:
+
+#### Windows: ACL deny (icacls) — precise control over write vs delete
+
+```powershell
+# Deny the current user write access to the three files (W = write data)
+icacls "$env:USERPROFILE\.dsh\profiles\safemode\package.json" /deny "$env:USERNAME:(W)"
+icacls "$env:USERPROFILE\.dsh\profiles\safemode\cordis.patch.yml" /deny "$env:USERNAME:(W)"
+icacls "$env:USERPROFILE\.dsh\profiles\safemode\pnpm-workspace.yaml" /deny "$env:USERNAME:(W)"
+
+# Stronger: also deny deletion (DE = delete; WD = write data / create file)
+icacls "...\package.json" /deny "$env:USERNAME:(WD,DE)"
+```
+
+To unlock (remove that user's deny entries):
+
+```powershell
+icacls "...\package.json" /remove:d "$env:USERNAME"
+```
+
+Key points:
+- `(W)` blocks content modification, `(DE)` blocks deletion, `(WD)` blocks
+  write + create — more precise than attrib: you can block writes while
+  leaving admins able to delete;
+- **Still does not stop administrators**: Administrators / SYSTEM have Full
+  Control (F) by default and can take ownership or clear the deny. To block
+  them too, deny `BUILTIN\Administrators` as well — but admins can still
+  bypass via "take ownership";
+- icacls requires permission to modify the file's ACL (the file owner has it
+  by default).
+
+#### Linux: immutable attribute (chattr +i) — root cannot touch it either
+
+```bash
+# Lock: file cannot be modified, deleted, or renamed (root included)
+sudo chattr +i ~/.dsh/profiles/safemode/package.json \
+              ~/.dsh/profiles/safemode/cordis.patch.yml \
+              ~/.dsh/profiles/safemode/pnpm-workspace.yaml
+
+# Inspect
+lsattr ~/.dsh/profiles/safemode/package.json     # output containing "i" = locked
+
+# Unlock
+sudo chattr -i ~/.dsh/profiles/safemode/package.json \
+              ~/.dsh/profiles/safemode/cordis.patch.yml \
+              ~/.dsh/profiles/safemode/pnpm-workspace.yaml
+```
+
+Key points:
+- `+i` (immutable) is the strongest lock: **nobody (root included) can
+  modify, delete, or rename** — you must `-i` first for any operation,
+  harder than chmod or ACL;
+- Requires `sudo` (root), and the filesystem must support the attribute
+  (ext4/xfs do; some network/container filesystems do not);
+- **Side effect for safemode**: the guard normally rebuilds a deleted file
+  (detectDrift finds "missing" → force-restore), but `+i` blocks even that;
+  upgrading the plugin or changing the whitelist also needs `-i` first. Use
+  it only when "no account on this machine (root included) may touch the
+  safemode config" is a real requirement; basic read-only
+  (attrib / chmod 444) is enough for everyday use.
+
+#### Three levels compared
+
+| Option | Blocks content edit | Blocks delete | Blocks root | Requires | Impact on guard self-heal |
+|---|---|---|---|---|---|
+| `attrib +R` / `chmod 444` (basic) | ✅ for normal users | ❌ | ❌ | none | none (guard skips writes when clean) |
+| icacls deny (ACL) | ✅ | ✅ (with DE) | ❌ (admins can bypass) | file owner | none |
+| `chattr +i` (immutable) | ✅ | ✅ | ✅ | sudo | ⚠️ blocks guard rebuild; `-i` first |
+
+Suggestion: **basic read-only is enough for everyday use** (pnpm runs as a
+normal user, 444 already blocks installs completely); add ACL `(DE)` if you
+want to guard against accidental deletion; only choose `chattr +i` when
+"no account (root included) may touch the safemode config" is a hard
+requirement.
+
 ## Notes
 
 - **Port**: safemode also carries the webServer, default 3080. Running it
