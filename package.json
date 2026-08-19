@@ -18,7 +18,8 @@
     "lib/ensure.js",
     "scripts/ensure-safemode.mjs",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "postinstall": "node scripts/ensure-safemode.mjs"
