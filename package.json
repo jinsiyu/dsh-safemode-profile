@@ -1,7 +1,15 @@
 {
   "name": "dsh-safemode-profile",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "description": "Safemode profile enforcer: force-restores ~/.dsh/profiles/safemode to a clean whitelist (dsh-base + dsh-web-app) on start and continuously guards it against modification, so `dsh --profile safemode` always boots with zero third-party plugins. No build scripts: the bundle row does all work.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jinsiyu/dsh-safemode-profile.git"
+  },
+  "homepage": "https://github.com/jinsiyu/dsh-safemode-profile",
+  "bugs": {
+    "url": "https://github.com/jinsiyu/dsh-safemode-profile/issues"
+  },
   "type": "module",
   "main": "lib/index.js",
   "exports": {
